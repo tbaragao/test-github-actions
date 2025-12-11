@@ -1,0 +1,26 @@
+name: CI # Nome do workflow - Cada arquivo yml é um workflow no github actions
+
+on: # define o trigger do workflow, nesse caso, quando houver um push na branch main
+  push:
+    branches: [main]
+    
+jobs: # define a lista de tarefas que serao realizadas no workflow
+  build: # nome do job pode ser alterado para qualquer coisa no padrao name-do-job
+    runs-on: ubuntu-latest # define o tipo de maquina virtual que será realizado o trabalho
+    steps: # define os passos que serao executados dentro de cada job definido
+      - name: Code Checkout # define o nome do passo
+        uses: actions/checkout@v6.0.1 # quando usamos USES estamos usando uma action da comunidade
+        
+      - name: Install .Net SDK
+        uses: actions/setup-dotnet@v5.0.1
+        with:
+          dotnet-version: 8.0.x
+          
+      - name: Restore dependencies
+        run: dotnet restore
+        
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+        
+      - name: Run Tests
+        run: dotnet test --no-build --configuration Release
