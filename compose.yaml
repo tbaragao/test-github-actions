@@ -1,0 +1,26 @@
+﻿services:
+  cd.api:
+    image: cd.api
+    build:
+      context: .
+      dockerfile: src/CD.Api/Dockerfile
+    ports:
+      - "5235:8080"        # Mapeia porta local 5235 para porta 8080 do container
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      # Sobrescrevendo configurações do appsettings via variáveis de ambiente:
+      - Variables__Name=${VARIABLES_NAME}
+      # Sobrescrevendo a lista de Hosts:
+      - HostOptions__Hosts__0__Name=${HOST_0_NAME}
+      - HostOptions__Hosts__0__Code=${HOST_0_CODE}
+      - HostOptions__Hosts__0__Number=${HOST_0_NUMBER}
+      - HostOptions__Hosts__1__Name=${HOST_1_NAME}
+      - HostOptions__Hosts__1__Code=${HOST_1_CODE}
+      - HostOptions__Hosts__1__Number=${HOST_1_NUMBER}
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s        # Verifica a cada 30 segundos
+      timeout: 10s         # Timeout de 10 segundos
+      retries: 3           # 3 tentativas antes de marcar como unhealthy
+      start_period: 10s    # Espera 10s antes de começar os checks
+
