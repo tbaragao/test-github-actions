@@ -3,7 +3,11 @@ name: CI # Nome do workflow - Cada arquivo yml é um workflow no github actions
 on: # define o trigger do workflow, nesse caso, quando houver um push na branch main
   push:
     branches: [main]
-    
+    tags:
+      - 'v*' #dispara quando criar uma tag que começa com v (v1.0.0, v2.1.3, etc.)
+  pull_request: 
+    branches: [main]
+
 jobs: # define a lista de tarefas que serao realizadas no workflow
   build: # nome do job pode ser alterado para qualquer coisa no padrao name-do-job
     runs-on: ubuntu-latest # define o tipo de maquina virtual que será realizado o trabalho
@@ -24,3 +28,34 @@ jobs: # define a lista de tarefas que serao realizadas no workflow
         
       - name: Run Tests
         run: dotnet test --no-build --configuration Release
+  
+  docker: # define um novo job com uma nova responsabilidade
+    name: Buid and Image Push to Registry
+    runs-on: ubuntu-latest
+    needs: build # faz com que o sucesso do job Build seja requerido pra rodar esse job, ou seja, se tiver erro no build esse job nao roda
+    if: startsWith(github.ref, 'refs/tags/v') # github.ref - referência do Git (ex: refs/heads/main ou refs/tags/v1.0.0) | startsWith(..., 'refs/tags/v') - só executa se começar com refs/tags/v
+    steps:
+      - name: Code Checkout 
+        uses: actions/checkout@v6.0.1
+      
+      - name: Login at Github Container Registry
+        uses: docker/login-action@v3 # Documentacao da Action, conecta a todos os registries Azure, github, AWS - https://github.com/marketplace/actions/docker-login
+        with:
+          registry: ghcr.io # endereço do registry do github, se fosse do docker hub seria outro, azure outro, e aws outro
+          username: ${{ github.actor }} # variável automática com seu username do GitHub
+          password: ${{ secrets.GITHUB_TOKEN }} # token automático que o GitHub cria para cada workflow (não precisa configurar nada!)
+      
+      - name: Get Tag version
+        id: version # identificador para referenciar este step
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT #- ${GITHUB_REF#refs/tags/v} - pega refs/tags/v1.0.0 e remove o prefixo, sobrando 1.0.0 | >> $GITHUB_OUTPUT - salva como variável de saída para usar em outros steps
+      - name: Build and Image push
+        uses: docker/build-push-action@v6 # https://github.com/marketplace/actions/build-and-push-docker-images
+        with:
+          context: . # - pasta raiz para o build (onde o Docker vai procurar arquivos)
+          file: ./src/CD.Api/Dockerfile # caminho para o dockerfile
+          push: true # faz o push para o registry após o build
+          # latest: sempre aponta para a versão mais recente
+          # steps.version.outputs.VERSION - pega a saída do step com id: version
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.VERSION }}
