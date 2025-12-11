@@ -55,7 +55,7 @@ jobs: # define a lista de tarefas que serao realizadas no workflow
           file: ./src/CD.Api/Dockerfile # caminho para o dockerfile
           push: true # faz o push para o registry após o build
           # latest: sempre aponta para a versão mais recente
-          # steps.version.outputs.VERSION - pega a saída do step com id: version
+          # steps.version.outputs.VERSION - pega a saída do step com id: version 
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ steps.version.outputs.VERSION }}
