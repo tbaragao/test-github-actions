@@ -30,6 +30,7 @@ app.UseHttpsRedirection();
 
 app.MapGet("/variables", (IOptions<Variable> options) =>
     {
+        Console.WriteLine("/Variables called");
         return options.Value;
     })
     .WithName("GetVariables")
@@ -37,9 +38,13 @@ app.MapGet("/variables", (IOptions<Variable> options) =>
 
 app.MapGet("/hosts", (IOptions<HostOptions> options) =>
     {
+        Console.WriteLine("/Variables called");
+        
         return options.Value;
     })
     .WithName("GetHosts")
     .WithOpenApi();
+
+Console.WriteLine("Api starting");
 
 app.Run();

@@ -29,12 +29,12 @@ jobs:
           
       - name: Download Task Definition
         # aws ecs describe-task-definition - pega a definição atual
-        # --task-definition cd-api-task - nome da task definition (vamos criar depois na AWS)
+        # --task-definition client-api-task - nome da task definition (vamos criar depois na AWS)
         # --query taskDefinition - extrai só a parte que interessa
         # > task-definition.json - salva em arquivo
         run: |
           aws ecs describe-task-definition \
-          --task-definition cd-api-task \
+          --task-definition client-api-task \
           --query taskDefinition \
           > task-definition.json
           
@@ -43,13 +43,13 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1 # action oficial da AWS
         with:
           task-definition: task-definition.json # arquivo que baixamos no step anterior
-          container-name: cd-api # nome do container dentro da Task Definition
+          container-name: client-api # nome do container dentro da Task Definition
           image: ${{ steps.login-ecr.outputs.registry }}/dotnet/client-api:latest # nova imagem para usar (a que publicamos no CI)
           
       - name: Deploy
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2 # action oficial da AWS para deploy
         with:
           task-definition: ${{ steps.task-definition.outputs.task-definition }} # usa a saída do step anterior (o JSON atualizado)
-          service: cd-api-service # nome do Service no ECS
-          cluster: cd-api-cluster # nome do Cluster no ECS
+          service: client-api-service # nome do Service no ECS
+          cluster: prd-worthix-dotnet # nome do Cluster no ECS
           wait-for-service-stability: true # espera o deploy terminar antes de concluir o workflow
